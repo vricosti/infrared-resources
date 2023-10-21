@@ -6,12 +6,13 @@ Url: https://raw.githubusercontent.com/vricosti/infrared-resources/main/ir-keyta
 Usage:
     Run the script with -h or --help to see usage options.
 """
+import sys
 import os
+import signal
 import subprocess
 import re
-import time
-import signal
 import argparse
+
 
 def get_ir_keytable_output(sysdev):
     cmd = ["stdbuf", "-oL", "ir-keytable", "-s", sysdev, "-t"]
@@ -28,6 +29,7 @@ def get_ir_keytable_output(sysdev):
 
     return ''.join(lines)
 
+
 def extract_protocol_and_scancode(output):
     # Extract lines containing "lirc protocol"
     match = re.search(r"lirc protocol\(([^)]+)\): scancode = (0x[\da-fA-F]+)", output)
@@ -36,50 +38,56 @@ def extract_protocol_and_scancode(output):
         return protocol, scancode
     return None, None
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Script to capture remote control key presses and generate a TOML file.')
     parser.add_argument('-s', '--sysdev', default='rc0', help='RC device to control. Defaults to rc0 if not specified.')
     return parser.parse_args()
 
+
 def main():
-    args = parse_arguments()
-    sysdev = args.sysdev
+    try:
+        args = parse_arguments()
+        sysdev = args.sysdev
 
-    filename = input("Please enter the file name: ").strip()
-    filename_no_ext, ext = os.path.splitext(filename)
-    if not ext:
-        filename = f"{filename}.toml"
+        filename = input("Please enter the file name: ").strip()
+        filename_no_ext, ext = os.path.splitext(filename)
+        if not ext:
+            filename = f"{filename}.toml"
 
-    keys_dict = {}
-    global_protocol = None
+        keys_dict = {}
+        global_protocol = None
 
-    while True:
-        key_name = input("Enter the key name (in upper case) or a space to stop: ").strip()
-        if key_name == '':
-            break
+        while True:
+            key_name = input("Enter the key name (in upper case) or a space to stop: ").strip()
+            if key_name == '':
+                break
 
-        #print("Please press the button on your remote for key:", key_name)
-        output = get_ir_keytable_output(sysdev)
-        protocol, scancode = extract_protocol_and_scancode(output)
-        if protocol and scancode:
-            print(f'{scancode} = "{key_name}" #protocol ="{protocol}"')
-            keys_dict[key_name] = scancode
-            if not global_protocol:
-                global_protocol = protocol
-                if global_protocol == 'rc5x_20':
-                    global_protocol = 'rc5'
+            # print("Please press the button on your remote for key:", key_name)
+            output = get_ir_keytable_output(sysdev)
+            protocol, scancode = extract_protocol_and_scancode(output)
+            if protocol and scancode:
+                print(f'{scancode} = "{key_name}" #protocol ="{protocol}"')
+                keys_dict[key_name] = scancode
+                if not global_protocol:
+                    global_protocol = protocol
+                    if global_protocol == 'rc5x_20':
+                        global_protocol = 'rc5'
 
-    with open(filename, 'w') as f:
-        f.write("[[protocols]]\n")
-        f.write(f'name = "{filename_no_ext}"\n')
-        f.write(f'protocol = "{global_protocol}"\n')
-        f.write(f'variant = "{global_protocol}"\n')
-        f.write("[protocols.scancodes]\n")
-        for key_name, scancode in keys_dict.items():
-            f.write(f'{scancode} = "{key_name}"\n')
+        with open(filename, 'w') as f:
+            f.write("[[protocols]]\n")
+            f.write(f'name = "{filename_no_ext}"\n')
+            f.write(f'protocol = "{global_protocol}"\n')
+            f.write(f'variant = "{global_protocol}"\n')
+            f.write("[protocols.scancodes]\n")
+            for key_name, scancode in keys_dict.items():
+                f.write(f'{scancode} = "{key_name}"\n')
 
-    print(f"File '{filename}' has been written.")
+        print(f"File '{filename}' has been written.")
+    except KeyboardInterrupt:
+        print("\n\nScript interrupted by user. Exiting gracefully.")
+        sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
-
