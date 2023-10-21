@@ -2,7 +2,7 @@
 Script Name: ir-keytable-record.py
 Purpose: Script to capture remote control key presses and generate a TOML file.
 Author: Vince Ricosti
-
+Url: https://raw.githubusercontent.com/vricosti/infrared-resources/main/ir-keytable-record.py
 Usage:
     Run the script with -h or --help to see usage options.
 """
