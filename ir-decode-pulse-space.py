@@ -9,11 +9,12 @@ def normalize_to_sony_protocol(data):
     space_0 = -600
     space_1 = -1200
     mark_space_2 = 1200
+    long_space = -25800
 
     # Check if the first two values match the header
     if abs(data[0] - header_mark) <= tolerance and abs(data[1] - header_space) <= tolerance:
         # Normalize the subsequent values
-        for i in range(2, len(data)):
+        for i in range(len(data)):
             if abs(data[i] - mark_0_or_1) <= tolerance:
                 data[i] = mark_0_or_1
             elif abs(data[i] - space_0) <= tolerance:
@@ -22,6 +23,12 @@ def normalize_to_sony_protocol(data):
                 data[i] = space_1
             elif abs(data[i] - mark_space_2) <= tolerance:
                 data[i] = mark_space_2
+            elif abs(data[i] - header_mark) <= tolerance:
+                data[i] = header_mark
+            elif abs(data[i] - header_space) <= tolerance:
+                data[i] = header_space
+            elif abs(data[i] - long_space) <= tolerance:
+                data[i] = long_space
 
     return data
 
