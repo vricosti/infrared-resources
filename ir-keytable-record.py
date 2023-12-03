@@ -12,6 +12,7 @@ import signal
 import subprocess
 import re
 import argparse
+from collections import defaultdict
 
 
 def get_ir_keytable_output(sysdev):
@@ -31,11 +32,9 @@ def get_ir_keytable_output(sysdev):
 
 
 def extract_protocol_and_scancode(output):
-    # Extract lines containing "lirc protocol"
     match = re.search(r"lirc protocol\(([^)]+)\): scancode = (0x[\da-fA-F]+)", output)
     if match:
-        protocol, scancode = match.groups()
-        return protocol, scancode
+        return match.groups()
     return None, None
 
 
@@ -50,38 +49,34 @@ def main():
         args = parse_arguments()
         sysdev = args.sysdev
 
-        filename = input("Please enter the file name: ").strip()
-        filename_no_ext, ext = os.path.splitext(filename)
-        if not ext:
-            filename = f"{filename}.toml"
+        filename = input("Please enter the file name (without extension): ").strip() + '.toml'
 
-        keys_dict = {}
-        global_protocol = None
+        # Dict to store protocols and their associated keys and scancodes
+        protocols_dict = defaultdict(lambda: {"name": "", "protocol": "", "variant": "", "scancodes": {}})
 
         while True:
-            key_name = input("Enter the key name (in upper case) or a space to stop: ").strip()
+            key_name = input("Enter the key name (in upper case) or just press ENTER to stop: ").strip()
             if key_name == '':
                 break
 
-            # print("Please press the button on your remote for key:", key_name)
             output = get_ir_keytable_output(sysdev)
             protocol, scancode = extract_protocol_and_scancode(output)
             if protocol and scancode:
-                print(f'{scancode} = "{key_name}" #protocol ="{protocol}"')
-                keys_dict[key_name] = scancode
-                if not global_protocol:
-                    global_protocol = protocol
-                    if global_protocol == 'rc5x_20':
-                        global_protocol = 'rc5'
+                print(f'Detected key {key_name} with scancode {scancode} for protocol {protocol}')
+                if not protocols_dict[protocol]['name']:
+                    protocols_dict[protocol].update({"name": protocol, "protocol": protocol, "variant": protocol})
+                protocols_dict[protocol]['scancodes'][scancode] = key_name
 
         with open(filename, 'w') as f:
-            f.write("[[protocols]]\n")
-            f.write(f'name = "{filename_no_ext}"\n')
-            f.write(f'protocol = "{global_protocol}"\n')
-            f.write(f'variant = "{global_protocol}"\n')
-            f.write("[protocols.scancodes]\n")
-            for key_name, scancode in keys_dict.items():
-                f.write(f'{scancode} = "{key_name}"\n')
+            for protocol, data in protocols_dict.items():
+                f.write(f"[[protocols]]\n")
+                f.write(f'name = "{data["name"]}"\n')
+                f.write(f'protocol = "{data["protocol"]}"\n')
+                f.write(f'variant = "{data["variant"]}"\n')
+                f.write("[protocols.scancodes]\n")
+                for scancode, key_name in data['scancodes'].items():
+                    f.write(f'{scancode} = "{key_name}"\n')
+                f.write("\n")
 
         print(f"File '{filename}' has been written.")
     except KeyboardInterrupt:
@@ -91,3 +86,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
