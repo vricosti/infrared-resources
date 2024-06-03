@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Representation</title>
+    <style>
+        .row {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .bit {
+            width: 20px;
+            height: 30px;
+            display: inline-block;
+            text-align: center;
+            font-family: monospace;
+            margin: 0 2px;
+        }
+        .bit-rect {
+            width: 20px;
+            height: 30px;
+            display: inline-block;
+            text-align: center;
+            font-family: monospace;
+            margin: 0 2px;
+        }
+        .rect-5 {
+            background-color: lightblue;
+        }
+        .rect-7 {
+            background-color: lightgreen;
+        }
+        .hex {
+            display: inline-block;
+            text-align: center;
+            font-family: monospace;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Original number -->
+        <div class="row" id="original"></div>
+        <!-- Inverted number -->
+        <div class="row" id="inverted"></div>
+        <!-- Rectangle representation -->
+        <div class="row" id="rectangles"></div>
+        <div class="row">
+            <div class="hex" id="hex5"></div>
+            <div class="hex" id="hex7"></div>
+        </div>
+    </div>
+
+    <script>
+                              10000000000010010
+        const binaryNumber = "010010010000";
+        const invertBinaryNumber = "000010010010";
+        
+        // 0x10012
+
+        // 
+        // 0010010 (18) (0x12)
+
+        // Original number
+        const originalDiv = document.getElementById('original');
+        for (let bit of binaryNumber) {
+            const bitSpan = document.createElement('span');
+            bitSpan.className = 'bit';
+            bitSpan.innerText = bit;
+            originalDiv.appendChild(bitSpan);
+        }
+
+        // Inverted number
+        const invertedDiv = document.getElementById('inverted');
+        const invertedNumber = binaryNumber.split('').reverse().join('');
+        for (let bit of invertedNumber) {
+            const bitSpan = document.createElement('span');
+            bitSpan.className = 'bit';
+            bitSpan.innerText = bit;
+            invertedDiv.appendChild(bitSpan);
+        }
+
+        // Rectangle representation
+        const rectanglesDiv = document.getElementById('rectangles');
+        for (let i = 0; i < binaryNumber.length; i++) {
+            const bitSpan = document.createElement('span');
+            bitSpan.className = 'bit-rect';
+            if (i < 5) {
+                bitSpan.classList.add('rect-5');
+            } else {
+                bitSpan.classList.add('rect-7');
+            }
+            bitSpan.innerText = binaryNumber[i];
+            rectanglesDiv.appendChild(bitSpan);
+        }
+
+        // Hexadecimal representation
+        const hex5Div = document.getElementById('hex5');
+        const hex7Div = document.getElementById('hex7');
+        const first5Bits = binaryNumber.slice(0, 5);
+        const last7Bits = binaryNumber.slice(5);
+        hex5Div.innerText = parseInt(first5Bits, 2).toString(16).toUpperCase();
+        hex7Div.innerText = parseInt(last7Bits, 2).toString(16).toUpperCase();
+    </script>
+</body>
+</html>
+
